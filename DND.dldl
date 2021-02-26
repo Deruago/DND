@@ -1,0 +1,139 @@
+// DND grammar and lexicon
+/
+/  DND is a language that natural deduces abstract propositions.
+/  Its usage is to check whether abstract propositions are tautologies.
+/
+//
+
+DELETE: ESCAPE_CHARS         [\n\r\b\f\t]+
+DELETE: SPACES               [\s]+
+
+/ variables
+VAR                          var
+
+/ logic
+AND                          and
+OR                           or
+NOT                          not
+IMPLICATION                  [=][>]
+
+/ equivalence
+BI_IMPLICATION               [<][=][>]
+EQUAL                        [=]
+
+/ compare
+GREATER_OR_EQUAL_THAN        [>][=]
+LESS_OR_EQUAL_THAN           [<][=]
+GREATER_THAN                 [>]
+LESS_THAN                    [<]
+
+/ arithmetic
+PLUS                         [+]
+MINUS                        [-]
+MULTIPLY                     [*]
+DIVIDE                       [/]
+POWER                        [\^]
+
+/ Sets
+IGNORE: NATURAL_SET          naturals
+IGNORE: INTEGER_SET          integers
+
+/ Set operation
+IGNORE: ELEMENT_IN_SET       in
+
+/ quantifiers
+IGNORE: FOR_ALL              for_all
+IGNORE: THERE_IS             there_is
+
+/ symbols
+IGNORE: LEFT_CURLY_BRACKET   [(]
+IGNORE: RIGHT_CURLY_BRACKET  [)]
+IGNORE: LEFT_BRACKET         ([{]|[\[])
+IGNORE: RIGHT_BRACKET        ([}]|[\]])
+IGNORE: COLON                [:]
+
+/ core values
+TRUE                         true
+FALSE                        false
+VARNAME                      [a-zA-Z]+
+
+prog
+	stmts
+
+stmts
+	stmt stmts
+	EMPTY
+	
+stmt
+	value
+	expression
+
+unary_operator
+	NOT
+
+binary_operator
+	logic
+	arithmetic
+	
+arithmetic
+	PLUS
+	MINUS
+	MULTIPLY
+	DIVIDE
+	POWER
+	
+logic
+	AND
+	OR
+	IMPLICATION
+	EQUAL
+	BI_IMPLICATION
+	GREATER_OR_EQUAL_THAN
+	GREATER_THAN
+	LESS_OR_EQUAL_THAN
+	LESS_THAN
+	
+value
+	FALSE
+	TRUE
+	VARNAME
+	LEFT_CURLY_BRACKET expression RIGHT_CURLY_BRACKET
+	LEFT_CURLY_BRACKET quantifier RIGHT_CURLY_BRACKET
+	variable_declaration
+
+quantifier
+	for_all_quantifier
+	there_is_quantifier
+	
+for_all_quantifier
+	FOR_ALL LEFT_BRACKET domain COLON function RIGHT_BRACKET
+
+there_is_quantifier
+	THERE_IS LEFT_BRACKET domain COLON function RIGHT_BRACKET
+
+domain
+	expression
+	EMPTY
+
+function
+	expression
+	EMPTY
+
+variable_declaration
+	natural_variable_declaration
+	integer_variable_declaration
+
+integer_variable_declaration
+	VAR VARNAME ELEMENT_IN_SET INTEGER_SET
+	
+natural_variable_declaration
+	VAR VARNAME ELEMENT_IN_SET NATURAL_SET
+
+expression
+	unary_operator value
+	value binary_operator value
+	expression binary_operator expression
+	value
+	
+
+/
