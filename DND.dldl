@@ -5,7 +5,8 @@
 /
 //
 
-DELETE: COMMENTS              [\\]+[^\n]*[\n]
+DELETE: SINGLE_LINE_COMMENT   [\\]+[^\n]*[\n]
+DELETE: MULTI_LINE_COMMENT    [\\][*][^*]*[*][\\]
 DELETE: ESCAPE_CHARS          [\n\r\b\f\t]+
 DELETE: SPACES                [\s]+
 
@@ -28,6 +29,7 @@ IGNORE: IMPLICATION           [=][>]
 / equivalence
 IGNORE: BI_IMPLICATION        [<][=][>]
 IGNORE: EQUAL                 [=]
+IGNORE: NOT_EQUAL             [!][=]
 
 / compare
 IGNORE: GREATER_OR_EQUAL_THAN [>][=]
@@ -48,6 +50,8 @@ IGNORE: INTEGER_SET          [iI]ntegers
 
 / Set operation
 IGNORE: ELEMENT_IN_SET       [iI]n
+IGNORE: SUBSET_OF            [iI]s[_\s][sS]ubset[_\s][oO]f
+IGNORE: PROPER_SUBSET_OF     [iI]s[_\s][pP]roper[_\s][sS]ubset[_\s][oO]f
 
 / quantifiers
 IGNORE: FOR_ALL              [fF]or[_\s]all
@@ -88,12 +92,13 @@ GROUP: any_operator binary_operator unary_operator
 GROUP: binary_operator binary_logic binary_arithmetic
 GROUP: unary_operator unary_logic
 GROUP: binary_arithmetic plus_arithmetic minus_arithmetic multiply_arithmetic divide_arithmetic power_arithmetic
-GROUP: binary_logic and_logic or_logic implication_logic equal_logic bi_implication_logic greater_or_equal_than_logic greater_than_logic less_or_equal_than_logic less_than_logic
+GROUP: binary_logic and_logic or_logic implication_logic equal_logic bi_implication_logic greater_or_equal_than_logic greater_than_logic less_or_equal_than_logic less_than_logic not_equal_logic proper_subset_logic subset_logic
 GROUP: unary_logic not_logic
 
 GROUP: variable_declaration set_variable_declaration
 GROUP: set_variable_declaration natural_variable_declaration integer_variable_declaration custom_set_variable_declaration function_variable_declaration custom_variable_variable_declaration
 GROUP: expression single_expression dual_expression
+GROUP: custom_set custom_set_generation custom_set_declaration
 
 plus_arithmetic
 	PLUS
@@ -140,6 +145,14 @@ less_or_equal_than_logic
 less_than_logic
 	LESS_THAN
 
+not_equal_logic
+	NOT_EQUAL
+	
+subset_logic
+	SUBSET_OF
+
+proper_subset_logic
+	PROPER_SUBSET_OF
 	
 for_all_quantifier
 	FOR_ALL LEFT_SQUARE_BRACKET domain COLON function RIGHT_SQUARE_BRACKET
@@ -184,15 +197,21 @@ function_name
 	VARNAME
 
 valuelist
-	value COMMA value varlist
-	value varlist
+	valuelist COMMA value
+	value
 	EMPTY
 
 varlist
-	VARNAME varlist
+	varlist COMMA VARNAME
+	VARNAME
 	EMPTY
+
 	
-custom_set
+
+custom_set_declaration
+	LEFT_BRACKET valuelist RIGHT_BRACKET
+
+custom_set_generation
 	LEFT_BRACKET domain COLON function RIGHT_BRACKET
 	
 value
