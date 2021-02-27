@@ -5,57 +5,70 @@
 /
 //
 
-DELETE: ESCAPE_CHARS         [\n\r\b\f\t]+
-DELETE: SPACES               [\s]+
+DELETE: COMMENTS              [\\]+[^\n]*[\n]
+DELETE: ESCAPE_CHARS          [\n\r\b\f\t]+
+DELETE: SPACES                [\s]+
+
+/ Generic user keywords
+IGNORE: DEFINE                [dD]efine
+IGNORE: IMPORT                [iI]mport
 
 / variables
-VAR                          var
+IGNORE: VAR                   [vV]ar
+
+/ User defined functions
+IGNORE: FUNCTION              [fF]unction
 
 / logic
-AND                          and
-OR                           or
-NOT                          not
-IMPLICATION                  [=][>]
+IGNORE: AND                   [aA]nd
+IGNORE: OR                    [oO]r
+IGNORE: NOT                   [nN]ot
+IGNORE: IMPLICATION           [=][>]
 
 / equivalence
-BI_IMPLICATION               [<][=][>]
-EQUAL                        [=]
+IGNORE: BI_IMPLICATION        [<][=][>]
+IGNORE: EQUAL                 [=]
 
 / compare
-GREATER_OR_EQUAL_THAN        [>][=]
-LESS_OR_EQUAL_THAN           [<][=]
-GREATER_THAN                 [>]
-LESS_THAN                    [<]
+IGNORE: GREATER_OR_EQUAL_THAN [>][=]
+IGNORE: LESS_OR_EQUAL_THAN    [<][=]
+IGNORE: GREATER_THAN          [>]
+IGNORE: LESS_THAN             [<]
 
 / arithmetic
-PLUS                         [+]
-MINUS                        [-]
-MULTIPLY                     [*]
-DIVIDE                       [/]
-POWER                        [\^]
+IGNORE: PLUS                  [+]
+IGNORE: MINUS                 [-]
+IGNORE: MULTIPLY              [*]
+IGNORE: DIVIDE                [/]
+IGNORE: POWER                 [\^]
 
 / Sets
-IGNORE: NATURAL_SET          naturals
-IGNORE: INTEGER_SET          integers
+IGNORE: NATURAL_SET          [nN]aturals
+IGNORE: INTEGER_SET          [iI]ntegers
 
 / Set operation
-IGNORE: ELEMENT_IN_SET       in
+IGNORE: ELEMENT_IN_SET       [iI]n
 
 / quantifiers
-IGNORE: FOR_ALL              for_all
-IGNORE: THERE_IS             there_is
+IGNORE: FOR_ALL              [fF]or[_\s]all
+IGNORE: THERE_IS             [tT]here[_\s]is
 
 / symbols
 IGNORE: LEFT_CURLY_BRACKET   [(]
 IGNORE: RIGHT_CURLY_BRACKET  [)]
-IGNORE: LEFT_BRACKET         ([{]|[\[])
-IGNORE: RIGHT_BRACKET        ([}]|[\]])
+IGNORE: LEFT_BRACKET         [{]
+IGNORE: RIGHT_BRACKET        [}]
+IGNORE: LEFT_SQUARE_BRACKET  [\[]
+IGNORE: RIGHT_SQUARE_BRACKET [\]]
 IGNORE: COLON                [:]
+IGNORE: COMMA                [,]
 
 / core values
-TRUE                         true
-FALSE                        false
-VARNAME                      [a-zA-Z]+
+TRUE                         [tT]rue
+FALSE                        [fF]alse
+VARNAME                      [a-zA-Z]+[a-zA-Z_0-9]*
+NUMBER                       [0-9]+
+DECIMAL                      [0-9]+[\.][0-9]+
 
 prog
 	stmts
@@ -63,53 +76,76 @@ prog
 stmts
 	stmt stmts
 	EMPTY
-	
-stmt
-	value
-	expression
 
-unary_operator
+/ Main top language logic
+GROUP: stmt value expression external_logic
+GROUP: external_logic function_declaration variable_definition variable_initialization import_declaration
+
+GROUP: quantifier for_all_quantifier there_is_quantifier
+
+/ operators
+GROUP: any_operator binary_operator unary_operator
+GROUP: binary_operator binary_logic binary_arithmetic
+GROUP: unary_operator unary_logic
+GROUP: binary_arithmetic plus_arithmetic minus_arithmetic multiply_arithmetic divide_arithmetic power_arithmetic
+GROUP: binary_logic and_logic or_logic implication_logic equal_logic bi_implication_logic greater_or_equal_than_logic greater_than_logic less_or_equal_than_logic less_than_logic
+GROUP: unary_logic not_logic
+
+GROUP: variable_declaration set_variable_declaration
+GROUP: set_variable_declaration natural_variable_declaration integer_variable_declaration custom_set_variable_declaration function_variable_declaration custom_variable_variable_declaration
+GROUP: expression single_expression dual_expression
+
+plus_arithmetic
+	PLUS
+	
+minus_arithmetic
+	MINUS
+	
+multiply_arithmetic
+	MULTIPLY
+	
+divide_arithmetic
+	DIVIDE
+	
+power_arithmetic
+	POWER
+
+not_logic
 	NOT
 
-binary_operator
-	logic
-	arithmetic
-	
-arithmetic
-	PLUS
-	MINUS
-	MULTIPLY
-	DIVIDE
-	POWER
-	
-logic
+and_logic
 	AND
-	OR
-	IMPLICATION
-	EQUAL
-	BI_IMPLICATION
-	GREATER_OR_EQUAL_THAN
-	GREATER_THAN
-	LESS_OR_EQUAL_THAN
-	LESS_THAN
 	
-value
-	FALSE
-	TRUE
-	VARNAME
-	LEFT_CURLY_BRACKET expression RIGHT_CURLY_BRACKET
-	LEFT_CURLY_BRACKET quantifier RIGHT_CURLY_BRACKET
-	variable_declaration
+or_logic
+	OR
+	
+implication_logic
+	IMPLICATION
+	
+equal_logic
+	EQUAL
+	
+bi_implication_logic
+	BI_IMPLICATION
+	
+greater_or_equal_than_logic
+	GREATER_OR_EQUAL_THAN
+	
+greater_than_logic
+	GREATER_THAN
+	
+less_or_equal_than_logic
+	LESS_OR_EQUAL_THAN
+	
+less_than_logic
+	LESS_THAN
 
-quantifier
-	for_all_quantifier
-	there_is_quantifier
 	
 for_all_quantifier
-	FOR_ALL LEFT_BRACKET domain COLON function RIGHT_BRACKET
+	FOR_ALL LEFT_SQUARE_BRACKET domain COLON function RIGHT_SQUARE_BRACKET
 
 there_is_quantifier
-	THERE_IS LEFT_BRACKET domain COLON function RIGHT_BRACKET
+	THERE_IS LEFT_SQUARE_BRACKET domain COLON function RIGHT_SQUARE_BRACKET
 
 domain
 	expression
@@ -119,21 +155,84 @@ function
 	expression
 	EMPTY
 
-variable_declaration
-	natural_variable_declaration
-	integer_variable_declaration
 
 integer_variable_declaration
-	VAR VARNAME ELEMENT_IN_SET INTEGER_SET
+	VAR varlist ELEMENT_IN_SET INTEGER_SET
 	
 natural_variable_declaration
-	VAR VARNAME ELEMENT_IN_SET NATURAL_SET
+	VAR varlist ELEMENT_IN_SET NATURAL_SET
 
-expression
+custom_variable_variable_declaration
+	VAR varlist ELEMENT_IN_SET VARNAME
+
+custom_set_variable_declaration
+	VAR varlist ELEMENT_IN_SET custom_set
+
+function_variable_declaration
+	VAR varlist ELEMENT_IN_SET function_call
+	
+function_call
+	function_name function_argument_list
+
+function_argument_list
+	LEFT_CURLY_BRACKET valuelist RIGHT_CURLY_BRACKET
+	
+function_declaration_argument_list
+	LEFT_CURLY_BRACKET varlist RIGHT_CURLY_BRACKET
+	
+function_name
+	VARNAME
+
+valuelist
+	value COMMA value varlist
+	value varlist
+	EMPTY
+
+varlist
+	VARNAME varlist
+	EMPTY
+	
+custom_set
+	LEFT_BRACKET domain COLON function RIGHT_BRACKET
+	
+value
+	NUMBER
+	DECIMAL
+	FALSE
+	TRUE
+	VARNAME
+	LEFT_CURLY_BRACKET expression RIGHT_CURLY_BRACKET
+	quantifier
+	custom_set
+	variable_declaration
+	function_call
+
+single_expression
+	value
 	unary_operator value
+
+dual_expression
 	value binary_operator value
 	expression binary_operator expression
-	value
-	
 
+function_declaration
+	DEFINE FUNCTION function_name function_declaration_argument_list block
+	
+variable_definition
+	DEFINE VAR variable_name
+
+variable_initialization
+	DEFINE VAR variable_name EQUAL value
+
+variable_name
+	VARNAME
+	
+block
+	LEFT_BRACKET stmts RIGHT_BRACKET
+	
+import_declaration
+	IMPORT LESS_THAN imported_library_name GREATER_THAN
+
+imported_library_name
+	VARNAME
 /
